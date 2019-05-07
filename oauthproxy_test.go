@@ -645,10 +645,6 @@ func NewProcessCookieTestWithOptionsModifiers(modifiers ...OptionsModifier) *Pro
 	}, modifiers...)
 }
 
-func (p *ProcessCookieTest) MakeCookie(value string, ref time.Time) []*http.Cookie {
-	return p.proxy.MakeSessionCookie(p.req, value, p.opts.CookieExpire, ref)
-}
-
 func (p *ProcessCookieTest) SaveSession(s *sessions.SessionState) error {
 	err := p.proxy.SaveSession(p.rw, p.req, s)
 	if err != nil {
@@ -945,11 +941,11 @@ func (st *SignatureTest) MakeRequestWithExpectedKey(method, body, key string) {
 
 	state := &sessions.SessionState{
 		Email: "mbland@acm.org", AccessToken: "my_access_token"}
-	value, err := proxy.provider.CookieForSession(state, proxy.CookieCipher)
+	err = proxy.SaveSession(st.rw, req, state)
 	if err != nil {
 		panic(err)
 	}
-	for _, c := range proxy.MakeSessionCookie(req, value, proxy.CookieExpire, time.Now()) {
+	for _, c := range st.rw.Result().Cookies() {
 		req.AddCookie(c)
 	}
 	// This is used by the upstream to validate the signature.
